@@ -1,0 +1,178 @@
+pipeline {
+    agent {
+    kubernetes {
+      defaultContainer 'jnlp'
+      yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+      run: jnlp
+spec:
+  containers:
+  - name: git
+    image: gcr.io/cloud-builders/git
+    command:
+    - cat
+    tty: true
+  - name: python-382
+    image: registry.hub.docker.com/library/python:3.8.2
+    command:
+    - cat
+    tty: true
+  - name: busybox
+    image: busybox
+    command:
+    - cat
+    tty: true
+  - name: gcloud
+    image: google/cloud-sdk:latest
+    command:
+    - cat
+    tty: true   
+    volumeMounts:
+      - name: kaniko-secret
+        mountPath: /secret
+    env:
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/kaniko-secret.json         
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    command:
+    - /busybox/cat
+    tty: true
+    volumeMounts:
+      - name: kaniko-secret
+        mountPath: /secret
+    env:
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/kaniko-secret.json
+  volumes:
+    - name: kaniko-secret
+      secret:
+        secretName: kaniko-secret
+  imagePullSecrets:
+  - name: jenkins-image-pull-secret      
+
+"""
+   }
+}
+    environment {
+        JenkinsDockerGCRSecret = credentials('jenkins-docker-gcr-secret')
+    }
+    stages {
+        stage ('git clone - master') {
+            when {
+                branch 'master'
+            }
+            steps{
+                container('git'){
+
+                    git branch: 'master',
+                        credentialsId: 'Rohan-Github-Account-Credentials',
+                        url: 'https://github.com/r4rohan/CI-CD-on-Kubernetes.git'
+                }
+            }
+        }
+        stage ('git clone - uat') {
+            when {
+                branch 'uat'
+            }
+            steps{
+                container('git'){
+                    git branch: 'uat',
+                        credentialsId: 'Rohan-Github-Account-Credentials',
+                        url: 'https://github.com/r4rohan/CI-CD-on-Kubernetes.git'
+                }
+            }
+        }
+        stage('Feature Branch Build') {
+            when {
+                expression { BRANCH_NAME != 'master' && BRANCH_NAME != 'uat' && BRANCH_NAME != 'prod'}
+            }
+            steps{
+                container('git'){
+                    git branch: '${BRANCH_NAME}',
+                        credentialsId: 'Rohan-Github-Account-Credentials',
+                        url: 'https://github.com/r4rohan/CI-CD-on-Kubernetes.git'
+                }
+
+                dir ('jenkins-app') {
+                    container('python-382'){
+                        sh 'python -v'
+                        sh 'python app.yml'
+                    }
+                }  
+            }
+        }
+        stage ('build service into docker image - master') {
+            when {
+                branch 'master'
+            }
+            steps {
+                dir ('jenkins-app') {
+                    container('python-382'){
+                        sh 'python --version'
+                    }
+
+                    container(name: 'kaniko', shell: '/busybox/sh') {
+                        sh 'pwd'
+                        sh """
+                        #!/busybox/sh 
+                        /kaniko/executor --dockerfile Dockerfile --context `pwd`/ --verbosity debug --insecure --skip-tls-verify --destination gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:$BUILD_NUMBER --destination gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:latest
+                        """
+                    }
+                }
+            }
+        }
+        stage ('build service into docker image - uat') {
+            when {
+                branch 'uat'
+            }
+            steps {
+
+                dir ('jenkins-app') {
+                    container('python-382'){
+                        sh 'python --version'
+                    }
+               
+                    container(name: 'kaniko', shell: '/busybox/sh') {
+                        sh 'pwd'
+                        sh """
+                        #!/busybox/sh 
+                        /kaniko/executor --dockerfile Dockerfile --context `pwd`/ --verbosity debug --insecure --skip-tls-verify --destination gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:$BUILD_NUMBER --destination gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:latest
+                        """
+                    }  
+                }
+            }
+        }
+        stage ('deploy to kubernetes cluster - master') {
+            when {
+                branch 'master'
+            }
+            steps {
+                container('gcloud'){
+                    sh 'kubectl version'
+                    sh 'gcloud auth activate-service-account --key-file=/secret/kaniko-secret.json'
+                    sh "gcloud container clusters get-credentials  rohan-cicd-cluster --region=us-central1-c"
+                    sh 'kubectl --namespace jenkins-cicd get pods'
+                    sh "kubectl --namespace jenkins-cicd --cluster gke_cloudorbit_us-central1-c_rohan-cicd-cluster set image deployment jenkinsapp-cicd jenkinsapp-cicd=gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:$BUILD_NUMBER"
+                }
+            }
+        }
+        stage ('deploy to kubernetes cluster - uat') {
+            when {
+                branch 'uat'
+            }
+            steps {
+                container('gcloud'){
+                    sh 'kubectl version'
+                    sh 'gcloud auth activate-service-account --key-file=/secret/kaniko-secret.json'
+                    sh "gcloud container clusters get-credentials rohan-cicd-cluster --region=us-central1-c"
+                    sh 'kubectl --namespace jenkins-cicd get pods'
+                    sh "kubectl --namespace jenkins-cicd --cluster gke_cloudorbit_us-central1-c_rohan-cicd-cluster set image deployment jenkinsapp-cicd jenkinsapp-cicd=gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/uat/jenkinsapp:$BUILD_NUMBER"
+                }
+            }
+        }
+    }  
+}
