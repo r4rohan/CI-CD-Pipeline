@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudbuildapp-cicd
+  labels:
+    name: cloudbuildapp-cicd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: cloudbuildapp-cicd
+  minReadySeconds: 60
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        name: cloudbuildapp-cicd
+    spec:
+      containers:
+      - name: cloudbuildapp-cicd
+        image: gcr.io/cloudorbit/rohan-ci-cd/cloudbuild-cicd/uat/cloudbuildapp:latest
+        imagePullPolicy: Always
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: cloudbuildapp-cicd
+spec:
+  selector:
+    name: cloudbuildapp-cicd
+  ports:
+    - name: port1
+      protocol: TCP
+      port: 5001
+      targetPort: 5001
+  type: LoadBalancer
+
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cloudbuildapp-cicd
+spec:
+  maxReplicas: 3
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: cloudbuildapp-cicd
+  targetCPUUtilizationPercentage: 80
