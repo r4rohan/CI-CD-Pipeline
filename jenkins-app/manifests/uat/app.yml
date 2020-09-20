@@ -21,7 +21,7 @@ spec:
         name: uat-app
     spec:
       containers:
-      - name: dev-app
+      - name: uat-app
         image: gcr.io/cloudorbit/app/uat/jenkinsapp:latest
         imagePullPolicy: Always
 
