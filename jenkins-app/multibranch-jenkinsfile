@@ -20,7 +20,7 @@ pipeline {
             steps{
                 git branch: 'master',
                     credentialsId: 'Rohan-Github-Account-Credentials',
-                    url: 'https://github.com/rohan-searce/ci-cd-python-app'
+                    url: 'https://github.com/r4rohan/CI-CD-on-Kubernetes'
             }
         }
         stage ('git clone - uat') {
@@ -30,7 +30,7 @@ pipeline {
             steps{
                 git branch: 'uat',
                     credentialsId: 'Rohan-Github-Account-Credentials',
-                    url: 'https://github.com/rohan-searce/ci-cd-python-app'
+                    url: 'https://github.com/r4rohan/CI-CD-on-Kubernetes'
             }
         }
         stage ('git clone - prod') {
@@ -40,7 +40,7 @@ pipeline {
             steps{
                git branch: 'prod',
                     credentialsId: 'Rohan-Github-Account-Credentials',
-                    url: 'https://github.com/rohan-searce/ci-cd-python-app'
+                    url: 'https://github.com/r4rohan/CI-CD-on-Kubernetes'
             }
         }
         stage('Feature Branch Build') {
@@ -69,11 +69,11 @@ pipeline {
                     sh 'cat $JenkinsDockerGCRSecret | docker login --username _json_key --password-stdin https://gcr.io'
 
                     sh 'python -v'
-                    sh 'docker build --file Dockerfile --tag gcr.io/mv-auxiliary/rohan-mb/master/jenkinsapp:$BUILD_NUMBER --tag gcr.io/mv-auxiliary/rohan-mb/master/jenkinsapp:latest .'
-                    sh 'docker push gcr.io/mv-auxiliary/rohan-mb/master/jenkinsapp:$BUILD_NUMBER'   
-                    sh 'docker push gcr.io/mv-auxiliary/rohan-mb/master/jenkinsapp:latest'
-                    sh 'docker image rm gcr.io/mv-auxiliary/rohan-mb/master/jenkinsapp:$BUILD_NUMBER'
-                    sh 'docker image rm gcr.io/mv-auxiliary/rohan-mb/master/jenkinsapp:latest'
+                    sh 'docker build --file Dockerfile --tag gcr.io/cloudorbit/rohan-mb/master/jenkinsapp:$BUILD_NUMBER --tag gcr.io/cloudorbit/rohan-mb/master/jenkinsapp:latest .'
+                    sh 'docker push gcr.io/cloudorbit/rohan-mb/master/jenkinsapp:$BUILD_NUMBER'   
+                    sh 'docker push gcr.io/cloudorbit/rohan-mb/master/jenkinsapp:latest'
+                    sh 'docker image rm gcr.io/cloudorbit/rohan-mb/master/jenkinsapp:$BUILD_NUMBER'
+                    sh 'docker image rm gcr.io/cloudorbit/rohan-mb/master/jenkinsapp:latest'
                 }
             }
         }
@@ -86,11 +86,11 @@ pipeline {
                     sh 'cat $JenkinsDockerGCRSecret | docker login --username _json_key --password-stdin https://gcr.io'
                     
                     sh 'python -v'
-                    sh 'docker build --file Dockerfile --tag gcr.io/mv-auxiliary/rohan-mb/uat/jenkinsapp:$BUILD_NUMBER --tag gcr.io/mv-auxiliary/rohan-mb/uat/jenkinsapp:latest .'
-                    sh 'docker push gcr.io/mv-auxiliary/rohan-mb/uat/jenkinsapp:$BUILD_NUMBER'   
-                    sh 'docker push gcr.io/mv-auxiliary/rohan-mb/uat/jenkinsapp:latest'
-                    sh 'docker image rm gcr.io/mv-auxiliary/rohan-mb/uat/jenkinsapp:$BUILD_NUMBER'
-                    sh 'docker image rm gcr.io/mv-auxiliary/rohan-mb/uat/jenkinsapp:latest'  
+                    sh 'docker build --file Dockerfile --tag gcr.io/cloudorbit/rohan-mb/uat/jenkinsapp:$BUILD_NUMBER --tag gcr.io/cloudorbit/rohan-mb/uat/jenkinsapp:latest .'
+                    sh 'docker push gcr.io/cloudorbit/rohan-mb/uat/jenkinsapp:$BUILD_NUMBER'   
+                    sh 'docker push gcr.io/cloudorbit/rohan-mb/uat/jenkinsapp:latest'
+                    sh 'docker image rm gcr.io/cloudorbit/rohan-mb/uat/jenkinsapp:$BUILD_NUMBER'
+                    sh 'docker image rm gcr.io/cloudorbit/rohan-mb/uat/jenkinsapp:latest'  
                 }
             }
         }
@@ -103,11 +103,11 @@ pipeline {
                     sh 'cat $JenkinsDockerGCRSecret | docker login --username _json_key --password-stdin https://gcr.io'
 
                     sh 'python -v'
-                    sh 'docker build --file Dockerfile --tag gcr.io/mv-auxiliary/rohan-mb/prod/jenkinsapp:$BUILD_NUMBER --tag gcr.io/mv-auxiliary/rohan-mb/prod/jenkinsapp:latest .'
-                    sh 'docker push gcr.io/mv-auxiliary/rohan-mb/prod/jenkinsapp:$BUILD_NUMBER'   
-                    sh 'docker push gcr.io/mv-auxiliary/rohan-mb/prod/jenkinsapp:latest'
-                    sh 'docker image rm gcr.io/mv-auxiliary/rohan-mb/prod/jenkinsapp:$BUILD_NUMBER'
-                    sh 'docker image rm gcr.io/mv-auxiliary/rohan-mb/prod/jenkinsapp:latest'  
+                    sh 'docker build --file Dockerfile --tag gcr.io/cloudorbit/rohan-mb/prod/jenkinsapp:$BUILD_NUMBER --tag gcr.io/cloudorbit/rohan-mb/prod/jenkinsapp:latest .'
+                    sh 'docker push gcr.io/cloudorbit/rohan-mb/prod/jenkinsapp:$BUILD_NUMBER'   
+                    sh 'docker push gcr.io/cloudorbit/rohan-mb/prod/jenkinsapp:latest'
+                    sh 'docker image rm gcr.io/cloudorbit/rohan-mb/prod/jenkinsapp:$BUILD_NUMBER'
+                    sh 'docker image rm gcr.io/cloudorbit/rohan-mb/prod/jenkinsapp:latest'  
                 }
             }
         }
