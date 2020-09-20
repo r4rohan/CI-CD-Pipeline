@@ -35,7 +35,7 @@ spec:
         mountPath: /secret
     env:
       - name: GOOGLE_APPLICATION_CREDENTIALS
-        value: secret/kaniko-executor-sa-creds.json         
+        value: secret/kaniko-secret.json         
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
     command:
@@ -46,7 +46,7 @@ spec:
         mountPath: /secret
     env:
       - name: GOOGLE_APPLICATION_CREDENTIALS
-        value: secret/kaniko-executor-sa-creds.json
+        value: secret/kaniko-secret.json
   volumes:
     - name: kaniko-secret
       secret:
@@ -153,7 +153,7 @@ spec:
             steps {
                 container('gcloud'){
                     sh 'kubectl version'
-                    sh 'gcloud auth activate-service-account --key-file=secret/kaniko-executor-sa-creds.json'
+                    sh 'gcloud auth activate-service-account --key-file=secret/kaniko-secret.json'
                     sh "gcloud container clusters get-credentials cloudorbit --zone us-central1-c --project cloudorbit"
                     sh 'kubectl --namespace dev get pods'
                     sh "kubectl --namespace dev --cluster gke_cloudorbit_us-central1-c_cloudorbit set image deployment dev-app dev-app=gcr.io/cloudorbit/app/dev/jenkinsapp:$BUILD_NUMBER"
@@ -167,7 +167,7 @@ spec:
             steps {
                 container('gcloud'){
                     sh 'kubectl version'
-                    sh 'gcloud auth activate-service-account --key-file=secret/kaniko-executor-sa-creds.json'
+                    sh 'gcloud auth activate-service-account --key-file=secret/kaniko-secret.json'
                     sh "gcloud container clusters get-credentials cloudorbit --zone us-central1-c --project cloudorbit"
                     sh 'kubectl --namespace dev get pods'
                     sh "kubectl --namespace dev --cluster gke_cloudorbit_us-central1-c_cloudorbit set image deployment uat-dev uat-dev=gcr.io/cloudorbit/app/uat/jenkinsapp:$BUILD_NUMBER"
