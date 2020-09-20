@@ -177,8 +177,8 @@ spec:
                     sh 'kubectl version'
                     sh 'gcloud auth activate-service-account --key-file=/secret/kaniko-secret.json'
                     sh "gcloud container clusters get-credentials cloudorbit --zone us-central1-c --project cloudorbit"
-                    sh 'kubectl --namespace dev get pods'
-                    sh "kubectl --namespace dev --cluster gke_cloudorbit_us-central1-c_cloudorbit set image deployment uat-dev uat-dev=gcr.io/cloudorbit/app/uat/jenkinsapp:$BUILD_NUMBER"
+                    sh 'kubectl --namespace uat get pods'
+                    sh "kubectl --namespace uat --cluster gke_cloudorbit_us-central1-c_cloudorbit set image deployment uat-app uat-app=gcr.io/cloudorbit/app/uat/jenkinsapp:$BUILD_NUMBER"
                 }
             }
         }
