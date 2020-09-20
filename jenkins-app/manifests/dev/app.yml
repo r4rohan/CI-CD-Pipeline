@@ -21,7 +21,7 @@ spec:
         name: dev-app
     spec:
       containers:
-      - name: test
+      - name: dev-app
         image: gcr.io/cloudorbit/app/dev/jenkinsapp:latest
         imagePullPolicy: Always
 
