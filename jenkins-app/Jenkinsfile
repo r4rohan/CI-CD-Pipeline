@@ -35,7 +35,7 @@ spec:
         mountPath: /secret
     env:
       - name: GOOGLE_APPLICATION_CREDENTIALS
-        value: /secret/kaniko-secret.json         
+        value: secret/kaniko-executor-sa-creds.json         
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
     command:
@@ -46,7 +46,7 @@ spec:
         mountPath: /secret
     env:
       - name: GOOGLE_APPLICATION_CREDENTIALS
-        value: /secret/kaniko-secret.json
+        value: secret/kaniko-executor-sa-creds.json
   volumes:
     - name: kaniko-secret
       secret:
@@ -100,7 +100,7 @@ spec:
                 dir ('jenkins-app') {
                     container('python-382'){
                         sh 'python -v'
-                        sh 'python app.yml'
+                        sh 'python app.py'
                     }
                 }  
             }
@@ -119,7 +119,7 @@ spec:
                         sh 'pwd'
                         sh """
                         #!/busybox/sh 
-                        /kaniko/executor --dockerfile Dockerfile --context `pwd`/ --verbosity debug --insecure --skip-tls-verify --destination gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:$BUILD_NUMBER --destination gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:latest
+                        /kaniko/executor --dockerfile Dockerfile --context `pwd`/ --verbosity debug --insecure --skip-tls-verify --destination gcr.io/cloudorbit/app/dev/jenkinsapp:$BUILD_NUMBER --destination gcr.io/cloudorbit/app/dev/jenkinsapp:latest
                         """
                     }
                 }
@@ -140,7 +140,7 @@ spec:
                         sh 'pwd'
                         sh """
                         #!/busybox/sh 
-                        /kaniko/executor --dockerfile Dockerfile --context `pwd`/ --verbosity debug --insecure --skip-tls-verify --destination gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:$BUILD_NUMBER --destination gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:latest
+                        /kaniko/executor --dockerfile Dockerfile --context `pwd`/ --verbosity debug --insecure --skip-tls-verify --destination gcr.io/cloudorbit/app/uat/jenkinsapp:$BUILD_NUMBER --destination gcr.io/cloudorbit/app/uat/jenkinsapp:latest
                         """
                     }  
                 }
@@ -153,10 +153,10 @@ spec:
             steps {
                 container('gcloud'){
                     sh 'kubectl version'
-                    sh 'gcloud auth activate-service-account --key-file=/secret/kaniko-secret.json'
-                    sh "gcloud container clusters get-credentials  rohan-cicd-cluster --region=us-central1-c"
-                    sh 'kubectl --namespace jenkins-cicd get pods'
-                    sh "kubectl --namespace jenkins-cicd --cluster gke_cloudorbit_us-central1-c_rohan-cicd-cluster set image deployment jenkinsapp-cicd jenkinsapp-cicd=gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/dev/jenkinsapp:$BUILD_NUMBER"
+                    sh 'gcloud auth activate-service-account --key-file=secret/kaniko-executor-sa-creds.json'
+                    sh "gcloud container clusters get-credentials cloudorbit --zone us-central1-c --project cloudorbit"
+                    sh 'kubectl --namespace dev get pods'
+                    sh "kubectl --namespace dev --cluster gke_cloudorbit_us-central1-c_cloudorbit set image deployment dev-app dev-app=gcr.io/cloudorbit/app/dev/jenkinsapp:$BUILD_NUMBER"
                 }
             }
         }
@@ -167,10 +167,10 @@ spec:
             steps {
                 container('gcloud'){
                     sh 'kubectl version'
-                    sh 'gcloud auth activate-service-account --key-file=/secret/kaniko-secret.json'
-                    sh "gcloud container clusters get-credentials rohan-cicd-cluster --region=us-central1-c"
-                    sh 'kubectl --namespace jenkins-cicd get pods'
-                    sh "kubectl --namespace jenkins-cicd --cluster gke_cloudorbit_us-central1-c_rohan-cicd-cluster set image deployment jenkinsapp-cicd jenkinsapp-cicd=gcr.io/cloudorbit/rohan-ci-cd/jenkins-cicd/uat/jenkinsapp:$BUILD_NUMBER"
+                    sh 'gcloud auth activate-service-account --key-file=secret/kaniko-executor-sa-creds.json'
+                    sh "gcloud container clusters get-credentials cloudorbit --zone us-central1-c --project cloudorbit"
+                    sh 'kubectl --namespace dev get pods'
+                    sh "kubectl --namespace dev --cluster gke_cloudorbit_us-central1-c_cloudorbit set image deployment uat-dev uat-dev=gcr.io/cloudorbit/app/uat/jenkinsapp:$BUILD_NUMBER"
                 }
             }
         }
