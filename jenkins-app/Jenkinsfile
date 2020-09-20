@@ -217,7 +217,7 @@ spec:
         }
         stage ('deploy to k8s - prod') {
             when {
-                branch 'master'
+                branch 'prod'
             }
             steps {
                 container('gcloud'){
