@@ -94,6 +94,18 @@ spec:
                 }
             }
         }
+        stage ('git clone - prod') {
+            when {
+                branch 'prod'
+            }
+            steps{
+                container('git'){
+                    git branch: 'prod',
+                        credentialsId: 'Rohan-Github-Account-Credentials',
+                        url: 'https://github.com/r4rohan/CI-CD-on-Kubernetes.git'
+                }
+            }
+        }
         stage('Feature Branch Build') {
             when {
                 expression { BRANCH_NAME != 'master' && BRANCH_NAME != 'uat' && BRANCH_NAME != 'prod'}
@@ -113,7 +125,7 @@ spec:
                 }  
             }
         }
-        stage ('build service into docker image - master') {
+        stage ('building docker image - master') {
             when {
                 branch 'master'
             }
@@ -133,7 +145,7 @@ spec:
                 }
             }
         }
-        stage ('build service into docker image - uat') {
+        stage ('building docker image - uat') {
             when {
                 branch 'uat'
             }
@@ -154,7 +166,28 @@ spec:
                 }
             }
         }
-        stage ('deploy to kubernetes cluster - master') {
+        stage ('building docker image - prod') {
+            when {
+                branch 'uat'
+            }
+            steps {
+
+                dir ('jenkins-app') {
+                    container('python-382'){
+                        sh 'python --version'
+                    }
+               
+                    container(name: 'kaniko', shell: '/busybox/sh') {
+                        sh 'pwd'
+                        sh """
+                        #!/busybox/sh 
+                        /kaniko/executor --dockerfile Dockerfile --context `pwd`/ --verbosity debug --insecure --skip-tls-verify --destination gcr.io/cloudorbit/app/prod/jenkinsapp:$BUILD_NUMBER --destination gcr.io/cloudorbit/app/prod/jenkinsapp:latest
+                        """
+                    }  
+                }
+            }
+        }
+        stage ('deploy to k8s - master') {
             when {
                 branch 'master'
             }
@@ -168,7 +201,7 @@ spec:
                 }
             }
         }
-        stage ('deploy to kubernetes cluster - uat') {
+        stage ('deploy to k8s - uat') {
             when {
                 branch 'uat'
             }
@@ -179,6 +212,20 @@ spec:
                     sh "gcloud container clusters get-credentials cloudorbit --zone us-central1-c --project cloudorbit"
                     sh 'kubectl --namespace uat get pods'
                     sh "kubectl --namespace uat --cluster gke_cloudorbit_us-central1-c_cloudorbit set image deployment uat-app uat-app=gcr.io/cloudorbit/app/uat/jenkinsapp:$BUILD_NUMBER"
+                }
+            }
+        }
+        stage ('deploy to k8s - prod') {
+            when {
+                branch 'master'
+            }
+            steps {
+                container('gcloud'){
+                    sh 'kubectl version'
+                    sh 'gcloud auth activate-service-account --key-file=/secret/kaniko-secret.json'
+                    sh "gcloud container clusters get-credentials cloudorbit --zone us-central1-c --project cloudorbit"
+                    sh 'kubectl --namespace prod get pods'
+                    sh "kubectl --namespace prod --cluster gke_cloudorbit_us-central1-c_cloudorbit set image deployment prod-app prod-app=gcr.io/cloudorbit/app/prod/jenkinsapp:$BUILD_NUMBER"
                 }
             }
         }
