@@ -1,0 +1,16 @@
+# you need to set the value of these variables in cloudbuild UI in substitution variable section
+
+steps:
+- name: 'registry.hub.docker.com/rohankalhans/zip-utility:v1'
+  id: Zip File
+  args: ['zip', '-r', '${_CLOUD_FUNCTION_ZIP_FILE_NAME}', '${_MAIN_FILE}', '${_REQUIREMENT_FILE}']
+  dir: ${_SERVICE_FOLDER_NAME}
+- name: 'gcr.io/cloud-builders/gsutil'
+  id: 'Upload to Google Bucket'
+  args: ['cp', '${_CLOUD_FUNCTION_ZIP_FILE_NAME}', '${_CLOUD_STORAGE_BUCKET_NAME}']
+  dir: ${_SERVICE_FOLDER_NAME}
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: Deploy to Cloud Functions
+  args: ['functions', 'deploy', '${_CLOUD_FUNCTION_NAME}', '--runtime=${_CLOUD_RUNTIME}', '--trigger-topic=${_TRIGGER_TOPIC}', '--source=${_CLOUD_STORAGE_BUCKET_NAME}/${_CLOUD_FUNCTION_ZIP_FILE_NAME}', '--entry-point=${_CLOUD_FUNCTION_ENTRY_POINT}']
+
+# if you are deploying Google Cloud Functions with --trigger-http, just replace --trigger-topic=${_TRIGGER_TOPIC} wih --trigger-http

@@ -1,3 +1,6 @@
+# if you want to know about this pipeline in detail, check my medium blog: https://medium.com/searce/multibranch-and-ha-pipeline-in-jenkins-with-kaniko-on-gke-8a1e7fa93403
+# In this blog, I've demonstrated setting up multibranch pipeline in Jenkins on GKE with all details
+
 pipeline {
     agent {
     kubernetes {

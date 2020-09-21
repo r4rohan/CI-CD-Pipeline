@@ -1,0 +1,31 @@
+# an example file of Cloudbuild for CI/CD purpose with gradle example, you can go with else framework like maven
+# you need to set the value of these variables in cloudbuild UI in substitution variable section 
+
+steps:
+- name: 'gcr.io/cloud-builders/gradle'
+  id: Build Gradle
+  args: ['clean', 'build', '-x', 'test']
+  dir: ${_SERVICE_FOLDER_NAME}
+- name: 'gcr.io/cloud-builders/docker'
+  id: Build docker image
+  args: ['build', '--tag=${_GCR_DOCKER_IMAGE_PATH}:$COMMIT_SHA', '--tag=${_GCR_DOCKER_IMAGE_PATH}:latest', '.']
+  dir: ${_SERVICE_FOLDER_NAME}
+- name: 'gcr.io/cloud-builders/docker'
+  id: Push docker image with SHA tag
+  args: ['push', '${_GCR_DOCKER_IMAGE_PATH}:$COMMIT_SHA']
+- name: 'gcr.io/cloud-builders/docker'
+  id: Push docker image with latest tag
+  args: ['push', '${_GCR_DOCKER_IMAGE_PATH}:latest']
+- name: 'gcr.io/cloud-builders/kubectl'
+  id: Update image of kubernetes deployment
+  args: ['set', 'image', 'deployment/${_KUBERNETES_DEPLOYMENT_NAME}', '${_KUBERNETES_CONTAINER_NAME}=${_GCR_DOCKER_IMAGE_PATH}:$COMMIT_SHA', '--namespace=${_KUBERNETES_NAMESPACE}']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=${_KUBERNETES_CLUSTER_LOCATION}'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=${_KUBERNETES_CLUSTER_NAME}'
+- name: 'gcr.io/cloud-builders/kubectl'
+  id: Check rollout status of kubernetes deployment
+  args: ['rollout', 'status', 'deployment/${_KUBERNETES_DEPLOYMENT_NAME}', '--namespace=${_KUBERNETES_NAMESPACE}']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=${_KUBERNETES_CLUSTER_LOCATION}'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=${_KUBERNETES_CLUSTER_NAME}'
+timeout: 900s

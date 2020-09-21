@@ -11,12 +11,12 @@ resources:
 variables:
 
   # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: '43322574-036c-4786-83bd-e924f31a2a52'
+  dockerRegistryServiceConnection: 'xxxxx-xxxx-xxxx-xxxx-xxxxxxxx'
   imageRepository: 'pythonapp'
   containerRegistry: 'cloudorbit.azurecr.io'
   dockerfilePath: '**/Dockerfile'
   tag: '$(Build.BuildId)'
-  imagePullSecret: 'cloudorbit429779af-auth'
+  imagePullSecret: 'xxxxxxx-auth'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'

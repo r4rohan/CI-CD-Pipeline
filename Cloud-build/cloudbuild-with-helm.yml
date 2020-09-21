@@ -1,0 +1,35 @@
+# an example cloudbuild trigger file with deploying application code to kubernetes cluster with custom helm charts.
+# Before running this file, you need to create custom helm charts for deployments, service etc whatever you want.
+# You need to host custom chart at some repository like JFrog Artifactory or GCP Bucket Storage. Check this link for more: https://helm.sh/docs/topics/chart_repository
+# You need to set the value of these variables in cloudbuild UI in substitution variable section
+
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  id: Build docker image
+  args: ['build', '--tag=${_GCR_DOCKER_IMAGE_PATH}:$COMMIT_SHA', '--tag=${_GCR_DOCKER_IMAGE_PATH}:latest', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  id: Push docker image with SHA tag
+  args: ['push', '${_GCR_DOCKER_IMAGE_PATH}:$COMMIT_SHA']
+- name: 'gcr.io/cloud-builders/docker'
+  id: Push docker image with latest tag
+  args: ['push', '${_GCR_DOCKER_IMAGE_PATH}:latest']
+- name: 'alpine/helm:3.1.2'
+  id: Helm Version
+  args: ['version']
+- name: 'gcr.io/cloud-builders/gcloud'  
+  id: Pull kubernetes config
+  args: ['container', 'clusters', 'get-credentials', '${_KUBERNETES_CLUSTER_NAME}', '--zone', '${_KUBERNETES_CLUSTER_LOCATION}', '--project', '${PROJECT_ID}']
+- name: 'alpine/helm:3.1.2'
+  id: Helm add Repo
+  args: ['repo', 'add', '${_HELM_REPO_NAME}', '${_HELM_REPO_PATH}']
+- name: 'gcr.io/cloud-builders/kubectl'
+  id: Check current kubernetes context
+  args: ['config', 'current-context']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=${_KUBERNETES_CLUSTER_LOCATION}'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=${_KUBERNETES_CLUSTER_NAME}'
+- name: 'alpine/helm:3.1.2'
+  id: Helm Upgrade or Install
+  args: ['upgrade', '--install', '--debug', '--wait', '${_HELM_RELEASE_NAME}', '--namespace', '${_KUBERNETES_NAMESPACE}', '${_HELM_REPO_NAME}/${_HELM_CHART_NAME}', '--values', '${_HELM_VALUES_FILE_NAME}', '--set', 'container_properties.image.tag=$COMMIT_SHA', '--kube-context=${_KUBERNETES_CONTEXT}', '--version=${_HELM_CHART_VERSION}']
+  dir: ${_SERVICE_FOLDER_NAME}
+timeout: 1000s
